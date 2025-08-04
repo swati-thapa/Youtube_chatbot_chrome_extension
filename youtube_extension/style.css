@@ -1,0 +1,139 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+  width: 350px;
+  height: 500px;
+  background: #f5f5f5;
+}
+
+#container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chat-header {
+  background-color: #4A90E2;
+  color: white;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+}
+
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  background: white;
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+#input-box {
+  display: flex;
+  padding: 10px;
+  gap: 10px;
+  background: #f5f5f5;
+  border-top: 1px solid #ccc;
+}
+
+#user-input {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+#send-btn {
+  background-color: #28a745;
+  color: white;
+  font-weight: bold;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.bubble {
+  max-width: 80%;
+  padding: 10px 14px;
+  margin: 6px 0;
+  border-radius: 16px;
+  word-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.4;
+  display: inline-block;
+  position: relative;
+}
+
+.user {
+  background-color: #DCF8C6;
+  color: #111;
+  align-self: flex-end;
+  border-bottom-right-radius: 0;
+  margin-left: auto;
+}
+
+.bot {
+  background-color: #e6eafc;
+  color: #111;
+  align-self: flex-start;
+  border-bottom-left-radius: 0;
+  margin-right: auto;
+}
+
+.typing {
+  background-color: #e6eafc;
+  padding: 10px 14px;
+  border-radius: 16px;
+  margin: 6px 0;
+  width: fit-content;
+  display: flex;
+  align-items: center;
+}
+
+.refresh-bar {
+  text-align: right;
+  background: #f5f5f5;
+  padding: 6px 10px;
+  border-bottom: 1px solid #ccc;
+}
+
+#refresh-btn {
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.disclaimer {
+  font-size: 12px;
+  color: #555;
+  background-color: #f3f3f3;
+  padding: 6px 10px;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+}
+
+.related-segments {
+  margin-top: 10px;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.timestamp-link {
+  margin: 3px 0;
+}
+
+.timestamp-link a {
+  color: #007bff;
+  cursor: pointer;
+  text-decoration: underline;
+}

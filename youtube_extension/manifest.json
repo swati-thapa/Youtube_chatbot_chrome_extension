@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Chatbot Assistant",
+  "version": "1.0",
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": ["http://127.0.0.1:5000/"],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://www.youtube.com/watch*"],
+      "js": ["content.js"]
+    }
+  ]
+}

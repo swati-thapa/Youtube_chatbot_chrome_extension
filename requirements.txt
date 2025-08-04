@@ -1,0 +1,10 @@
+flask
+youtube-transcript-api
+langchain
+openai
+tiktoken
+faiss-cpu
+python-dotenv
+langchain_openai
+langchain_community
+langchain_core

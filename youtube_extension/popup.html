@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>YouTube Assistant</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="container">
+    <div class="chat-header">
+      YouTube Assistant
+      <button id="refresh-btn" title="Refresh" class="refresh-btn">🔄</button>
+    </div>
+
+    <!-- New disclaimer section -->
+    <div class="disclaimer">
+      If the video title doesn't match, please click the 🔄 refresh button above.
+    </div>
+
+    <div id="messages"></div>
+
+    <div id="input-box">
+      <input type="text" id="user-input" placeholder="Ask about this video..." />
+      <button id="send-btn">Send</button>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
