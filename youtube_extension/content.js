@@ -41,7 +41,7 @@ async function injectButtonIfNeeded() {
       });
 
       chrome.storage.local.set({ yt_video_id: videoId, yt_video_title: videoTitle }, () => {
-        console.log("✅ Updated storage with new video info:", { videoId, videoTitle });
+        console.log("Updated storage with new video info:", { videoId, videoTitle });
       });
     }
   });
@@ -88,7 +88,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ videoId, videoTitle });
   }
 
-  // 🔥 Add SEEK_VIDEO handler here
+  //Add SEEK_VIDEO handler here
   if (request.type === "SEEK_VIDEO") {
     const player = document.querySelector('video');
     if (player) {

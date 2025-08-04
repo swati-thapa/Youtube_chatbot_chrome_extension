@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const refreshBtn = document.getElementById("refresh-btn");
   if (refreshBtn) {
     refreshBtn.addEventListener("click", () => {
-      loadPopupContent(); // 🔄 Manual refresh
+      loadPopupContent(); //Manual refresh
     });
   }
 });
@@ -22,7 +22,7 @@ function loadPopupContent() {
     console.log("Loaded from chrome.storage:", { videoId, videoTitle });
 
     if (!videoId) {
-      appendBubble("Bot", "⚠️ Could not find video ID. Please open the popup from a YouTube video.", "bot");
+      appendBubble("Bot", "Could not find video ID. Please open the popup from a YouTube video.", "bot");
       return;
     }
 
@@ -55,7 +55,7 @@ async function sendMessage(videoId) {
     const tab = tabs[0];
     if (!tab || !tab.url.includes("youtube.com/watch")) {
       removeTypingBubble(loaderId);
-      appendBubble("Bot", "⚠️ Please open this extension on a YouTube video page.", "bot");
+      appendBubble("Bot", "Please open this extension on a YouTube video page.", "bot");
       return;
     }
 
@@ -72,9 +72,9 @@ async function sendMessage(videoId) {
         const data = await res.json();
         removeTypingBubble(loaderId);
 
-        appendBubble("Bot", data.answer || "❌ No answer returned", "bot");
+        appendBubble("Bot", data.answer || "No answer returned", "bot");
 
-        // 🔥 Only show segments if the user's question asks for timestamps
+        //Only show segments if the user's question asks for timestamps
         if (question.toLowerCase().includes("timestamp") ||
             question.toLowerCase().includes("time segment") ||
             question.toLowerCase().includes("when") ||
@@ -87,7 +87,7 @@ async function sendMessage(videoId) {
 
       } catch (err) {
         removeTypingBubble(loaderId);
-        appendBubble("Bot", "⚠️ Something went wrong. Please try again.", "bot");
+        appendBubble("Bot", "Something went wrong. Please try again.", "bot");
       }
     });
   });
@@ -102,7 +102,7 @@ document.getElementById("refresh-btn").onclick = async () => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const tab = tabs[0];
       if (!tab || !tab.url.includes("youtube.com/watch")) {
-        alert("⚠️ Please refresh only from a YouTube video page.");
+        alert("Please refresh only from a YouTube video page.");
         return;
       }
 
@@ -170,7 +170,7 @@ function removeTypingBubble(id) {
   if (el) el.remove();
 }
 
-// 🔥 Add Related Segments Below Answer (Clickable Timestamps)
+// Add Related Segments Below Answer (Clickable Timestamps)
 function appendRelatedSegments(chunks, tabId) {
   const msgDiv = document.getElementById("messages");
 
@@ -197,7 +197,7 @@ function appendRelatedSegments(chunks, tabId) {
   msgDiv.scrollTop = msgDiv.scrollHeight;
 }
 
-// 🔥 Seek Video to Timestamp (Send to content.js)
+//Seek Video to Timestamp (Send to content.js)
 function seekVideo(tabId, timestamp) {
   const parts = timestamp.split(":").map(Number);
 

@@ -1,13 +1,6 @@
 from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI
 
-def run_qa_chain_1(vectorstore, question: str) -> str:
-    qa_chain = RetrievalQA.from_chain_type(llm=ChatOpenAI(), retriever=vectorstore.as_retriever())
-    return qa_chain.run(question)
-
-def run_qa_chain_2(vectorstore,question: str):
-    retriver = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 3})
-    return retriver
 
 def format_timestamp(start_seconds):
     hours = int(start_seconds // 3600)
