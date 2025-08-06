@@ -1,8 +1,10 @@
 from flask import Blueprint, request, jsonify
 from services.transcript import fetch_transcript
 from services.embedding import build_vectorstore
-from services.qa_chain import run_qa_chain  # Updated to return context + chunks
-from services.augmentation import chain_with_context  # Renamed function to avoid confusion
+from services.qa_chain import run_qa_chain, format_timestamp
+from services.augmentation import chain_with_context
+from services.constant import SUMMARY_TRIGGER_KEYWORDS
+
 
 ask_blueprint = Blueprint("ask", __name__)
 
@@ -25,22 +27,29 @@ def ask():
         return jsonify({"error": "Missing video_id or question"}), 400
 
     try:
-        # Step 1: Fetch Transcript
         transcript_list = fetch_transcript(video_id)
-
-        # Step 2: Build Vectorstore
         vectorstore = build_vectorstore(transcript_list)
 
-        # Step 3: Retrieve top chunks and format context
-        context, chunks = run_qa_chain(vectorstore, question)
+        # Smart Context Switcher Logic
+    
 
-        # Step 4: Run LLM with context
+        if any(kw in question.lower() for kw in SUMMARY_TRIGGER_KEYWORDS):
+            # Use Intro Summary Block
+            intro_context = " ".join([entry['text'] for entry in transcript_list if entry['start'] < 60])
+            context = intro_context
+            chunks = []  # No related segments for general summary
+            print("🔍 Using Intro Summary Block")
+        else:
+            # Use Retrieval for Specific Queries
+            context, chunks = run_qa_chain(vectorstore, question)
+            print(f"🔍 Using Vectorstore Retrieval: Retrieved {len(chunks)} segments")
+
+        # Run LLM chain with prepared context
         answer = chain_with_context(context, question)
 
-        # Step 5: Return Answer + Clickable Timestamps Data
         return jsonify({
             "answer": answer,
-            "chunks": chunks  # Each chunk has 'text' and 'timestamp'
+            "chunks": chunks  # Only populated for specific queries
         })
 
     except Exception as e:

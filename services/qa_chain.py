@@ -1,7 +1,7 @@
 from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI
 
-
+# Timestamp Formatter (shared by both retrieval & keyword search)
 def format_timestamp(start_seconds):
     hours = int(start_seconds // 3600)
     minutes = int((start_seconds % 3600) // 60)
@@ -12,6 +12,7 @@ def format_timestamp(start_seconds):
     else:
         return f"{minutes}:{seconds:02d}"
 
+# Vectorstore Retrieval (Semantic Matching with timestamps)
 def run_qa_chain(vectorstore, question):
     retriever = vectorstore.as_retriever(search_kwargs={"k": 10})
     docs = retriever.get_relevant_documents(question)
@@ -37,3 +38,21 @@ def run_qa_chain(vectorstore, question):
 
     return context, chunks_with_timestamps
 
+# Keyword-based Timestamp Search (Simple Scan through Transcript)
+def find_keyword_segments(transcript_list, keyword):
+    """
+    Scans through the transcript and returns all segments where the keyword is mentioned.
+    """
+    keyword_lower = keyword.lower()
+    results = []
+
+    for entry in transcript_list:
+        if keyword_lower in entry['text'].lower():
+            start = entry.get('start', 0)
+            timestamp = format_timestamp(start)
+            results.append({
+                "text": entry['text'],
+                "timestamp": timestamp
+            })
+
+    return results
