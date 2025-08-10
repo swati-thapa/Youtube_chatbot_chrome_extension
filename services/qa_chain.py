@@ -1,5 +1,4 @@
-from langchain.chains import RetrievalQA
-from langchain_openai import ChatOpenAI
+import re
 
 # Timestamp Formatter (shared by both retrieval & keyword search)
 def format_timestamp(start_seconds):
@@ -38,21 +37,75 @@ def run_qa_chain(vectorstore, question):
 
     return context, chunks_with_timestamps
 
-# Keyword-based Timestamp Search (Simple Scan through Transcript)
-def find_keyword_segments(transcript_list, keyword):
-    """
-    Scans through the transcript and returns all segments where the keyword is mentioned.
-    """
-    keyword_lower = keyword.lower()
-    results = []
 
+def find_keyword_segments(transcript_list, keyword, min_gap_seconds=5, use_word_boundary=True, make_range=True):
+    """
+    Find keyword hits, group close ones into a single segment, and return a
+    clickable range like [0:15 – 0:29].
+
+    Returns a list of dicts:
+    {
+      "text": "merged snippet text",
+      "start": 15.0,         # seconds (float)
+      "end": 29.0,           # seconds (float)
+      "timestamp": "0:15 – 0:29"  # display string for UI
+    }
+    """
+    if not keyword:
+        return []
+
+    pattern = re.compile(
+        rf"\b{re.escape(keyword)}\b" if use_word_boundary else re.escape(keyword),
+        flags=re.IGNORECASE
+    )
+
+    # Collect all raw hits
+    hits = []
     for entry in transcript_list:
-        if keyword_lower in entry['text'].lower():
-            start = entry.get('start', 0)
-            timestamp = format_timestamp(start)
-            results.append({
-                "text": entry['text'],
-                "timestamp": timestamp
-            })
+        txt = entry.get("text", "")
+        if not txt:
+            continue
+        if pattern.search(txt):
+            start = float(entry.get("start", 0) or 0)
+            hits.append({"text": txt.strip(), "start": start})
+
+    if not hits:
+        return []
+
+    hits.sort(key=lambda x: x["start"])
+
+    # Group hits into windows
+    groups = []
+    cur_start = hits[0]["start"]
+    cur_end = hits[0]["start"]
+    cur_texts = [hits[0]["text"]]
+
+    for h in hits[1:]:
+        if h["start"] - cur_end <= float(min_gap_seconds):
+            # same group -> extend end and collect text
+            cur_end = h["start"]
+            cur_texts.append(h["text"])
+        else:
+            # flush current group
+            groups.append((cur_start, cur_end, " ".join(cur_texts)))
+            # start new group
+            cur_start = h["start"]
+            cur_end = h["start"]
+            cur_texts = [h["text"]]
+
+    # flush last group
+    groups.append((cur_start, cur_end, " ".join(cur_texts)))
+
+    # build results
+    results = []
+    for g_start, g_end, g_text in groups:
+        # if only one hit in group, g_end can equal g_start; still show range nicely
+        display = f"{format_timestamp(g_start)} – {format_timestamp(g_end)}" if make_range else format_timestamp(g_start)
+        results.append({
+            "text": g_text,
+            "start": g_start,
+            "end": g_end,
+            "timestamp": display
+        })
 
     return results
