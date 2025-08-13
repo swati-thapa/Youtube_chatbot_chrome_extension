@@ -6,6 +6,7 @@ from flask_cors import CORS
 from routes.ask import ask_blueprint
 
 load_dotenv()
+EXT_ID = os.getenv("EXTENSION_ID")
 
 app = Flask(__name__)
 
@@ -15,7 +16,7 @@ CORS(
     resources={
         r"/ask": {
             "origins": [
-                "chrome-extension://{os.getenv('EXTENSION_ID')}",  # <-- replace this
+                f"chrome-extension://{EXT_ID}",  # <-- replace this
                 "http://localhost",
                 "http://127.0.0.1",
                 "http://localhost:3000",

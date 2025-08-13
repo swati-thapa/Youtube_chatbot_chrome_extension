@@ -56,7 +56,10 @@ async function injectButtonIfNeeded() {
       "position:fixed;bottom:20px;right:20px;z-index:9999;padding:10px 15px;background:#007bff;color:white;border:none;border-radius:8px;cursor:pointer;";
     button.onclick = () => {
       chrome.storage.local.set({ yt_video_id: videoId, yt_video_title: videoTitle }, () => {
-        window.open("popup.html", "popup", "width=400,height=600");
+        //window.open("popup.html", "popup", "width=400,height=600");
+        const url = chrome.runtime.getURL("popup.html");
+        window.open(url, "popup", "width=400,height=600");
+
       });
     };
     document.body.appendChild(button);
