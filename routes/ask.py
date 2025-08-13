@@ -3,16 +3,14 @@ from flask import Blueprint, request, jsonify
 import re, string
 
 # --- your existing services ---
-from services.transcript import fetch_transcript                 # uses YouTubeTranscriptApi
+from services.transcript import fetch_transcript        
 from services.embedding import build_vectorstore
 from services.qa_chain import run_qa_chain
 from services.constant import SUMMARY_TRIGGER_KEYWORDS, timestamp_trigger_phrases
-from services.memory_chain import seed_session_history , extract_topic_with_memory
+from services.memory_chain import seed_session_history , extract_topic_with_memory,chain_with_memory
 from services.segments_llm import find_segments_with_llm  # NEW: LLM-based segment finder
 
 # --- NEW: memory-enabled chain (RunnableWithMessageHistory) ---
-from services.memory_chain import chain_with_memory
-
 ask_blueprint = Blueprint("ask", __name__)
 
 
@@ -51,10 +49,7 @@ def ask():
 
         # 2) Timestamp-mode: if the user explicitly asked for timestamps, short-circuit here
         ql = question.lower()
-        
-
-        ql = question.lower()
-        ql_norm = re.sub(r"\s+", " ", ql)                # normalize 'time stampof' -> 'time stampof' (keeps detection robust)
+        ql_norm = re.sub(r"\s+", " ", ql) 
 
         if any(trigger in ql_norm for trigger in timestamp_trigger_phrases):
             # Resolve pronouns/topic via memory
