@@ -1,14 +1,13 @@
 # routes/ask.py
-
 from flask import Blueprint, request, jsonify
 import re, string
 
 # --- your existing services ---
 from services.transcript import fetch_transcript                 # uses YouTubeTranscriptApi
 from services.embedding import build_vectorstore
-from services.qa_chain import run_qa_chain, find_keyword_segments
+from services.qa_chain import run_qa_chain
 from services.constant import SUMMARY_TRIGGER_KEYWORDS, timestamp_trigger_phrases
-from services.memory_chain import seed_session_history,get_session_history , extract_topic_with_memory
+from services.memory_chain import seed_session_history , extract_topic_with_memory
 from services.segments_llm import find_segments_with_llm  # NEW: LLM-based segment finder
 
 # --- NEW: memory-enabled chain (RunnableWithMessageHistory) ---

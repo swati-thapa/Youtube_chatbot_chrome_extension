@@ -2,8 +2,11 @@
   "manifest_version": 3,
   "name": "YouTube Chatbot Assistant",
   "version": "1.0",
-  "permissions": ["activeTab", "storage", "scripting"],
-  "host_permissions": ["http://127.0.0.1:5000/"],
+  "permissions": ["activeTab", "storage", "scripting", "tabs"],
+  "host_permissions": [
+    "http://127.0.0.1:5000/*",
+    "https://*/*"
+  ],
   "action": {
     "default_popup": "popup.html"
   },
@@ -11,6 +14,12 @@
     {
       "matches": ["*://www.youtube.com/watch*"],
       "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["config.js"],
+      "matches": ["<all_urls>"]
     }
   ]
 }

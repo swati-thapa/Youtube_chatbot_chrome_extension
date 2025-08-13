@@ -87,6 +87,21 @@ function getRecentTurns(videoId, limit = 8) {
   });
 }
 
+// --- get or prompt for access code ---
+async function getAccessCode() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(["access_code"], (res) => {
+      if (res.access_code) return resolve(res.access_code);
+      const code = prompt("Enter access code to use the assistant:");
+      if (code && code.trim()) {
+        chrome.storage.local.set({ access_code: code.trim() }, () => resolve(code.trim()));
+      } else {
+        resolve(null);
+      }
+    });
+  });
+}
+
 async function sendMessage(videoId) {
   const input = document.getElementById("user-input");
   const question = (input?.value || "").trim();
@@ -113,30 +128,43 @@ async function sendMessage(videoId) {
       const videoTitle = response?.videoTitle || "this video";
 
       try {
-        // NEW: include recent turns so backend can seed memory each request
+        const accessCode = await getAccessCode();
+        if (!accessCode) {
+          removeTypingBubble(loaderId);
+          appendBubble("Bot", "Access code required to use the assistant.", "bot");
+          return;
+        }
+
         const historyTurns = await getRecentTurns(videoId, 8);
         console.log("sending historyTurns:", historyTurns);
 
-        const res = await fetch("http://127.0.0.1:5000/ask", {
+        const res = await fetch(`${CONFIG.BACKEND_URL}/ask`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-Access-Code": accessCode
+          },
           body: JSON.stringify({ video_id: videoId, question, videoTitle, history: historyTurns })
         });
+
+        if (res.status === 403) {
+          chrome.storage.local.remove("access_code", () => {});
+          removeTypingBubble(loaderId);
+          appendBubble("Bot", "Access denied. Please re-enter the access code and try again.", "bot");
+          return;
+        }
 
         const data = await res.json();
         removeTypingBubble(loaderId);
 
-        // 2) Render bot answer
         const botAnswer = data?.answer || "❌ No answer returned";
         appendBubble("Bot", botAnswer, "bot");
 
-        // 3) Render segments if requested
         const wants = wantsTimestamps(question);
         if (wants && Array.isArray(data?.chunks) && data.chunks.length > 0) {
           appendRelatedSegments(data.chunks, tab.id);
         }
 
-        // 4) ✅ ATOMIC persist: save bot answer (+ segments if any) together
         const batch = [{ sender: "Bot", message: botAnswer, type: "bot" }];
         if (wants && Array.isArray(data?.chunks) && data.chunks.length > 0) {
           batch.push({ type: "segments", chunks: data.chunks });
@@ -172,7 +200,7 @@ document.getElementById("refresh-btn").onclick = async () => {
         }
 
         if (oldVideoId && history[oldVideoId]) {
-          delete history[oldVideoId]; // clear only the old video's history
+          delete history[oldVideoId];
         }
 
         chrome.storage.local.set({
@@ -186,10 +214,6 @@ document.getElementById("refresh-btn").onclick = async () => {
 };
 
 // ---------- UI helpers ----------
-
-/**
- * Render a chat bubble to the UI (render-only; no storage here).
- */
 function appendBubble(sender, message, type) {
   const msgDiv = document.getElementById("messages");
   const bubble = document.createElement("div");
@@ -199,25 +223,14 @@ function appendBubble(sender, message, type) {
   msgDiv.scrollTop = msgDiv.scrollHeight;
 }
 
-/**
- * Atomically append multiple entries to history to avoid race conditions.
- * entries: array of either:
- *  - { sender, message, type: "user"|"bot" }
- *  - { type: "segments", chunks }
- */
 function appendEntriesToHistory(entries) {
   if (!Array.isArray(entries) || entries.length === 0) return;
-
   chrome.storage.local.get(["yt_video_id", "chat_history"], (result) => {
     const videoId = result.yt_video_id;
     if (!videoId) return;
-
     const history = result.chat_history || {};
     if (!history[videoId]) history[videoId] = [];
-
-    // Push all entries in order
     history[videoId].push(...entries);
-
     chrome.storage.local.set({ chat_history: history });
   });
 }
@@ -226,13 +239,9 @@ function showTypingBubble() {
   const msgDiv = document.getElementById("messages");
   const loader = document.createElement("div");
   const loaderId = "typing-" + Date.now();
-
   loader.classList.add("bubble", "bot", "typing");
   loader.id = loaderId;
-  loader.innerHTML = `
-    <div class="dot-typing">
-      <span></span><span></span><span></span>
-    </div>`;
+  loader.innerHTML = `<div class="dot-typing"><span></span><span></span><span></span></div>`;
   msgDiv.appendChild(loader);
   msgDiv.scrollTop = msgDiv.scrollHeight;
   return loaderId;
@@ -243,45 +252,34 @@ function removeTypingBubble(id) {
   if (el) el.remove();
 }
 
-// render segments block and wire click-to-seek
 function appendRelatedSegments(chunks, tabId) {
   const msgDiv = document.getElementById("messages");
-
-  // avoid stacking multiple blocks
   const old = msgDiv.querySelector(".related-segments");
   if (old) old.remove();
-
   const section = document.createElement("div");
   section.classList.add("related-segments");
   section.innerHTML = `<b>📺 Related Video Segments:</b>`;
-
   chunks.slice(0, 10).forEach((chunk) => {
     const segment = document.createElement("div");
     segment.classList.add("timestamp-link");
-
-    // chunk.timestamp is "MM:SS – MM:SS" or "HH:MM:SS – HH:MM:SS"
     const label = chunk.timestamp || "[segment]";
     segment.innerHTML = `<a href="#" data-start="${chunk.start ?? ""}">[${label}]</a> ${chunk.text}`;
-
     segment.querySelector("a").addEventListener("click", (e) => {
       e.preventDefault();
       const numeric = Number(e.currentTarget.getAttribute("data-start"));
       if (Number.isFinite(numeric)) {
-        seekVideo(tabId, numeric); // already seconds
+        seekVideo(tabId, numeric);
       } else {
         const left = label.split("–")[0].replace(/[\[\]\s]/g, "");
-        seekVideo(tabId, parseTimestamp(left)); // parse "HH:MM:SS" or "MM:SS"
+        seekVideo(tabId, parseTimestamp(left));
       }
     });
-
     section.appendChild(segment);
   });
-
   msgDiv.appendChild(section);
   msgDiv.scrollTop = msgDiv.scrollHeight;
 }
 
-// --- timestamp parsing + seeking ---
 function parseTimestamp(ts) {
   const parts = (ts || "").split(":").map(v => parseInt(v, 10));
   if (parts.some(n => Number.isNaN(n))) return 0;

@@ -48,7 +48,7 @@ _llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
 qa_prompt = ChatPromptTemplate.from_messages([
     ("system",
      "You are a helpful assistant. Answer ONLY from the provided transcript context. "
-     "If the context is insufficient, say you don't know. Never assume facts not present in the context."),
+     "If the context is insufficient, say This is not discussed in this video sorry. Never assume facts not present in the context."),
     MessagesPlaceholder("history"),  # prior turns (memory)
     ("human", "Transcript context:\n{context}\n\nUser question: {question}")
 ])
